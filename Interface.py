@@ -5,6 +5,19 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
 import os
+import serial
+from threading import Thread
+
+root = tk.Tk()
+valori = []
+
+def serialReading():
+    global valori
+    while(running):
+        linie = ser.readline().decode('utf-8').strip()
+        #print(linie)
+        valori = list(map(float, linie.split(" ")))
+        #print(valori)
 
 class MicSignal:
     def __init__(self, root):
@@ -102,6 +115,7 @@ class MicSignal:
                         data.extend(values)
                     except ValueError:
                         continue
+                print(data)
             
             # Primele 1000 valori
             self.data = np.array(data[:1000])
@@ -112,18 +126,21 @@ class MicSignal:
             if len(self.data) < 1000:
                 messagebox.showwarning("Warning", f"Only {len(self.data)} values were found in the file.")
             
-            self.ax1.clear()
-            self.ax1.plot(self.data)
-            self.ax1.set_title("Original Signal")
-            self.ax1.set_xlabel("Sample")
-            self.ax1.set_ylabel("Amplitude")
-            self.ax1.grid(True)
-            self.canvas1.draw()
-            
+            #print(self.data)
+            self.plot1(self.data)
             self.calculate_fft()
             
         except Exception as e:
             messagebox.showerror("Error", f"Error loading file: {str(e)}")
+
+    def plot1(self, data_array):
+        self.ax1.clear()
+        self.ax1.plot(data_array)
+        self.ax1.set_title("Original Signal")
+        self.ax1.set_xlabel("Sample")
+        self.ax1.set_ylabel("Amplitude")
+        self.ax1.grid(True)
+        self.canvas1.draw()
     
     def calculate_fft(self):
         if self.data is None:
@@ -181,7 +198,27 @@ class MicSignal:
         except Exception as e:
             messagebox.showerror("Error", f"Error saving file: {str(e)}")
 
+
+
+
+running = True
+try:
+    ser = serial.Serial('COM3', 115200)  # open serial port
+    ser.readline()
+except:
+    print("Serial port inexistent")
+app = MicSignal(root)
+
+
+def updateGraph():
+    #print("ALO")
+    app.plot1(np.array(valori[:1000]))
+    root.after(10, updateGraph)
+
 if __name__ == "__main__":
-    root = tk.Tk()
-    app = MicSignal(root)
+    t = Thread(target=serialReading)
+    t.start()
+    root.after(10, updateGraph)
     root.mainloop()
+    running = False
+    t.join()
