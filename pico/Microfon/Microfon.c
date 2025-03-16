@@ -25,7 +25,10 @@ int main()
     adc_select_input(2);
 
     int index = 0;
+    bool ok = 0;
     while (true) {
+        cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, ok);
+        ok = 1 - ok;
         buffer_adc[index] = adc_read();
         sleep_us(40);
         index++;
@@ -35,7 +38,7 @@ int main()
                 printf("%d ", buffer_adc[i]);
             }
             printf("\n");
-            sleep_ms(2000);
+            //sleep_ms(250);
         }
     }
 }
