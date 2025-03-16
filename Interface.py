@@ -134,8 +134,8 @@ class MicSignal:
         freqs = np.fft.fftfreq(len(self.data), 1/self.sampling_rate)
         
         half_len = len(freqs) // 2
-        self.fft_data = self.fft_data[:half_len]
-        freqs = freqs[:half_len]
+        self.fft_data = self.fft_data[75:half_len]
+        freqs = freqs[75:half_len]
         
         self.ax2.clear()
         
