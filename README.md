@@ -1,2 +1,2 @@
-# Microfon-SIE
-Proiect pentru SIE 2025
+# Microfon
+Proiect facultate 2025
