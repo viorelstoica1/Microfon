@@ -147,7 +147,7 @@ class MicSignal:
         self.canvas1.draw()
     
     def calculate_fft(self):
-        if self.data is None:
+        if self.data is None or len(self.data) == 0:
             return
 
         self.fft_data = np.abs(np.fft.fft(self.data))
@@ -212,7 +212,10 @@ app = MicSignal(root)
 
 def updateGraph():
     #print("ALO")
+    global app
+    app.data = valori
     app.plot1(np.array(valori[:1000]))
+    app.calculate_fft()
     root.after(10, updateGraph)
 
 if __name__ == "__main__":
