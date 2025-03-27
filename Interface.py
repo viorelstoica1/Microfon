@@ -11,13 +11,17 @@ from threading import Thread
 root = tk.Tk()
 valori = []
 
+try:
+    ser = serial.Serial('COM12', 115200)  # open serial port
+    ser.readline()
+except:
+    print("Serial port inexistent")
+
 def serialReading():
-    global valori
+    global valori, ser
     while(running):
-        linie = ser.readline().decode('utf-8').strip()
-        #print(linie)
-        valori = list(map(float, linie.split(" ")))
-        #print(valori)
+        linie = ser.readline()
+        valori = list(linie)
 
 class MicSignal:
     def __init__(self, root):
@@ -202,11 +206,7 @@ class MicSignal:
 
 
 running = True
-try:
-    ser = serial.Serial('COM3', 115200)  # open serial port
-    ser.readline()
-except:
-    print("Serial port inexistent")
+
 app = MicSignal(root)
 
 

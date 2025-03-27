@@ -6,7 +6,7 @@
 #include "hardware/adc.h"
 
 #define MARIME_BUFFER 1000
-uint16_t buffer_adc[MARIME_BUFFER];
+uint8_t buffer_adc[MARIME_BUFFER];
 
 int main()
 {
@@ -29,13 +29,13 @@ int main()
     while (true) {
         cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, ok);
         ok = 1 - ok;
-        buffer_adc[index] = adc_read();
+        buffer_adc[index] = adc_read()/16; //0 -> 4096 0 -> 256
         sleep_us(40);
         index++;
         if(index == MARIME_BUFFER){
             index = 0;
             for(int i = 0; i < MARIME_BUFFER; i++){
-                printf("%d ", buffer_adc[i]);
+                printf("%c", buffer_adc[i]);
             }
             printf("\n");
             //sleep_ms(250);
