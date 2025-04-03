@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, Label, Entry
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -10,15 +10,22 @@ from threading import Thread
 
 root = tk.Tk()
 valori = []
+numarFormante = 3
+formante= [0] * numarFormante
+running = True
 
 try:
     ser = serial.Serial('COM12', 115200)  # open serial port
-    ser.readline()
+    if ser:
+        ser.readline()
+    else:
+        running = False
 except:
     print("Serial port inexistent")
+    running = False
 
 def serialReading():
-    global valori, ser
+    global valori, ser, running
     while(running):
         linie = ser.readline()
         valori = list(linie)
@@ -66,7 +73,14 @@ class MicSignal:
                                      bg="#2196F3", fg="white", font=("Arial", 12),
                                      padx=20, pady=10, width=15)
         self.save_button.pack(pady=10)
-        
+        self.labeluriFormante = []
+        Label(self.left_frame, text="Formante:").pack()
+        for i in range(numarFormante):
+            self.labeluriFormante.append(Label(self.left_frame, text= "0 Hz",padx=30))
+
+        for formanta in self.labeluriFormante:
+            formanta.pack()
+
 
         self.create_empty_plots()
         
@@ -98,6 +112,7 @@ class MicSignal:
         self.canvas2.get_tk_widget().pack(fill=tk.BOTH, expand=True)
     
     def load_data(self):
+        global valori, formante
         file_path = filedialog.askopenfilename(
             title="Select a file",
             filetypes=[("Text files", "*.txt"), ("CSV files", "*.csv"), ("All files", "*.*")]
@@ -119,9 +134,10 @@ class MicSignal:
                         data.extend(values)
                     except ValueError:
                         continue
-                print(data)
+                #print(data)
             
             # Primele 1000 valori
+            valori = data[:1000]
             self.data = np.array(data[:1000])
             if len(self.data) == 0:
                 messagebox.showerror("Error", "No data found.")
@@ -131,11 +147,17 @@ class MicSignal:
                 messagebox.showwarning("Warning", f"Only {len(self.data)} values were found in the file.")
             
             #print(self.data)
-            self.plot1(self.data)
-            self.calculate_fft()
+            #self.plot1(self.data)
+            #self.calculate_fft(formante)
             
         except Exception as e:
             messagebox.showerror("Error", f"Error loading file: {str(e)}")
+
+
+    def updateTextbox(self, formante):
+        for i in range(numarFormante):
+            textCalculat = str(formante[i])+" Hz"
+            self.labeluriFormante[i].config(text = textCalculat)
 
     def plot1(self, data_array):
         self.ax1.clear()
@@ -146,7 +168,9 @@ class MicSignal:
         self.ax1.grid(True)
         self.canvas1.draw()
     
-    def calculate_fft(self):
+    def calculate_fft(self, listaFormante):
+        global formante
+        listaFormante = formante
         if self.data is None or len(self.data) == 0:
             return
 
@@ -160,6 +184,18 @@ class MicSignal:
         
         self.ax2.clear()
         
+        listaFormante = [0] * len(listaFormante)
+        for i in range(1, len(self.fft_data)-1):
+            if self.fft_data[i] > self.fft_data[i-1] and self.fft_data[i] > self.fft_data[i+1]:
+                #maxim local
+                for j in range(0, len(listaFormante)):
+                    if self.fft_data[i] > listaFormante[j]:#TODO salvam axa gresita, trebuie salvata cealalta axa!!
+                        listaFormante[j] = self.fft_data[i]
+                        break
+        #print(listaFormante)
+        formante = listaFormante
+
+
         max_freq = max(freqs)
         if max_freq > 1e6:
             plot_freqs = freqs / 1e6
@@ -205,17 +241,17 @@ class MicSignal:
 
 
 
-running = True
 
 app = MicSignal(root)
 
 
 def updateGraph():
     #print("ALO")
-    global app
+    global app, formante
     app.data = valori
     app.plot1(np.array(valori[:1000]))
-    app.calculate_fft()
+    app.calculate_fft(formante)
+    app.updateTextbox(formante)
     root.after(10, updateGraph)
 
 if __name__ == "__main__":
