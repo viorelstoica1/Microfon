@@ -1,0 +1,5 @@
+tk
+numpy
+scipy
+matplotlib
+# Adaugă aici orice alte module folosite în proiectul tău
